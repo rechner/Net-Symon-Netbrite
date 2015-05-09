@@ -67,7 +67,7 @@ if ($result[0] ne "ok")
 }
 
 $Connection->RosterGet();
-$Connection->PresenceSend();
+$Connection->PresenceSend(priority=>1);
 while(defined($Connection->Process())) { }
 
 exit(0);
@@ -90,9 +90,13 @@ sub InMessage
     my $from = $fromJID->GetUserID();
     my $resource = $fromJID->GetResource();
     my $body = $message->GetBody();
-    print "===\n";
-    print "Message ($type)\n";
-    print "  From: $from ($resource)\n";
-    print "  Body: $body\n";
+
+    if ($body ne '') #ignore 'User typing' messages created when on pidgeon
+    {
+        print "===\n";
+        print "Message ($type)\n";
+        print "  From: $from ($resource)\n";
+        print "  Body: $body\n";
+    }
 }
 
