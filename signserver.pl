@@ -36,7 +36,9 @@ my $password = $cfg->param('XMPP.password');
 my $resource = $cfg->param('XMPP.resource');
 
 my $Connection = new Net::XMPP::Client(debuglevel=>0, debugfile=>'stdout');
-$Connection->SetCallBacks(message=>\&InMessage);
+
+$Connection->SetCallBacks(message=>\&InMessage, presence=>\&InPresence);
+
 my $status = $Connection->Connect(hostname=>$server,
                                   componentname=>$server,
                                   port=>$port,
@@ -49,8 +51,7 @@ $SIG{KILL} = \&Stop;
 $SIG{TERM} = \&Stop;
 $SIG{INT} = \&Stop;
 
-if (!(defined($status)))
-{
+if (!(defined($status))) {
     print "ERROR:  Jabber server is down or connection was not allowed.\n";
     print "        ($!)\n";
     exit(0);
@@ -60,8 +61,7 @@ my @result = $Connection->AuthSend(username=>$username,
                                    password=>$password,
                                    resource=>$resource);
 
-if ($result[0] ne "ok")
-{
+if ($result[0] ne "ok") {
     print "ERROR: Authorization failed: $result[0] - $result[1]\n";
     exit(0);
 }
@@ -72,17 +72,21 @@ while(defined($Connection->Process())) { }
 
 exit(0);
 
-sub Stop
-{
+sub Stop {
     print "Exiting...\n";
     $Connection->Disconnect();
     exit(0);
 }
 
-sub InMessage
-{
-    my $sid = shift;
-    my $message = shift;
+sub InPresence {
+    my ($sid, $presence) = @_;
+    if ($presence->GetType() eq 'subscribe') {
+        $Connection->Subscription(type=>'subscribed', to=>$presence->GetFrom());
+    }
+}
+
+sub InMessage {
+    my ($sid, $message) = @_;
     
     my $type = $message->GetType();
     my $fromJID = $message->GetFrom("jid");
@@ -91,8 +95,8 @@ sub InMessage
     my $resource = $fromJID->GetResource();
     my $body = $message->GetBody();
 
-    if ($body ne '') #ignore 'User typing' messages created when on pidgeon
-    {
+    #ignore 'User typing' messages created when on pidgeon
+    if ($body ne '') { 
         print "===\n";
         print "Message ($type)\n";
         print "  From: $from ($resource)\n";
