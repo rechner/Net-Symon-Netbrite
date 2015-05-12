@@ -11,23 +11,16 @@ use Config::Simple;
 
 my $cfg = new Config::Simple('app.ini');
 
-# my $sign = Net::Symon::NetBrite->new(
-#     address => $cfg->param('NETBRITE.address')
-# );
+my $sign = Net::Symon::NetBrite->new(
+    address => $cfg->param('NETBRITE.address')
+);
 
-# $sign->zones(
-#    main  => Net::Symon::NetBrite::Zone->new(
-#        rect => [0, 1, 160, 16],
-#        default_font => 'proportional_5',
-#        default_color => COLOR_RED,
-#    ));
-
-# <>;
-# $sign->message('line1', 'Monkeys are awesome');
-# <>;
-# $sign->message('line5', '{red}The {green}Quick {red}Brown Fox Jumps Over the Lazy Dog');
-# $sign->message('line1', 'Monkeys are awesome');
-# <>;
+$sign->zones(
+    main  => Net::Symon::NetBrite::Zone->new(
+       rect => [0, 1, 160, 16],
+        default_font => 'script_24',
+        default_color => COLOR_YELLOW,
+    ));
 
 my $server = $cfg->param('XMPP.server');
 my $port = $cfg->param('XMPP.port');
@@ -101,6 +94,7 @@ sub InMessage {
         print "Message ($type)\n";
         print "  From: $from ($resource)\n";
         print "  Body: $body\n";
+        $sign->message('main', $body);
     }
 }
 
