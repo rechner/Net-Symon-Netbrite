@@ -79,7 +79,7 @@ sub DisplayNextMessage {
     # We only read directly from the workingQueue, as the main message
     # queue is likely to change while  we iterate through it. Iterating through
     # a changing hash table is undefined behaviour in perl. We update
-    # the workingQueue at the end of each iteration
+    # the workingQueue at the end of each complete loop.
     my ($key, $messages) = each(%workingQueue);
 
     if (!$key){ #start from the beginning
