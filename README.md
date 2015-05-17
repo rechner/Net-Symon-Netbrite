@@ -22,7 +22,7 @@ give your message 10 seconds to display before yielding to the next person's mes
 - {blinkon} - The message will blink annoyingly
 - {blinkoff} - The message will stop blinking
 - {left}{center}{right} - Set the text alignment
-- {font <fontname>} - Change the font
+- {font _fontname_} - Change the font
 
 ### Fonts
 - monospace_7
