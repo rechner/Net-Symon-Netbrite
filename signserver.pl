@@ -9,6 +9,7 @@ use Net::Symon::NetBrite::Zone;
 use Net::XMPP;
 use Config::Simple;
 
+
 my $cfg = new Config::Simple('app.ini');
 
 my $sign = Net::Symon::NetBrite->new(
@@ -27,8 +28,9 @@ my $port = $cfg->param('XMPP.port');
 my $username = $cfg->param('XMPP.username');
 my $password = $cfg->param('XMPP.password');
 my $resource = $cfg->param('XMPP.resource');
-
 my $Connection = new Net::XMPP::Client(debuglevel=>0, debugfile=>'stdout');
+my %messageQueue = ();
+my %workingQueue = ();
 
 $Connection->SetCallBacks(message=>\&InMessage, presence=>\&InPresence);
 
@@ -61,9 +63,42 @@ if ($result[0] ne "ok") {
 
 $Connection->RosterGet();
 $Connection->PresenceSend(priority=>1);
-while(defined($Connection->Process())) { }
+
+my $lastMessage = time();
+while(defined($Connection->Process(2))) {
+    if (time() - $lastMessage >= 10){
+        if (DisplayNextMessage()){
+            $lastMessage = time();
+        }
+    }
+}
 
 exit(0);
+
+sub DisplayNextMessage {
+    # We only read directly from the workingQueue, as the main message
+    # queue is likely to change while  we iterate through it. Iterating through
+    # a changing hash table is undefined behaviour in perl. We update
+    # the workingQueue at the end of each iteration
+    my ($key, $messages) = each(%workingQueue);
+
+    if (!$key){ #start from the beginning
+        %workingQueue = %messageQueue;
+        ($key, $messages) = each(%workingQueue);
+    }
+
+    if ($key){
+        my $message = shift $messages;
+        $sign->message('main', $message);
+        if (!@{ $messages }){
+            delete $messageQueue{$key};
+        }
+        return 1;
+    }
+    else {
+        return 1;
+    }
+}
 
 sub Stop {
     print "Exiting...\n";
@@ -74,7 +109,8 @@ sub Stop {
 sub InPresence {
     my ($sid, $presence) = @_;
     if ($presence->GetType() eq 'subscribe') {
-        $Connection->Subscription(type=>'subscribed', to=>$presence->GetFrom());
+        $Connection->Subscription(type=>'subscribed',
+                                  to=>$presence->GetFrom());
     }
 }
 
@@ -94,7 +130,7 @@ sub InMessage {
         print "Message ($type)\n";
         print "  From: $from ($resource)\n";
         print "  Body: $body\n";
-        $sign->message('main', $body);
+        push( @{ $messageQueue{$from} }, $body);
     }
 }
 
