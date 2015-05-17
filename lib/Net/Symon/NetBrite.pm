@@ -318,7 +318,7 @@ sub message {
 
     my $body = pack("V C v v v v C C2 A[$zlen] C",
         $zlen,
-        $param->{priority} || PRI_OVERRIDE,
+        $param->{priority} || PRI_FOLLOW,
         $param->{activation_delay} || 0,
         $param->{display_delay} || 0,
         $param->{display_repeat} || 0,
